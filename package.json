@@ -1,0 +1,20 @@
+{
+  "name": "slither-offline",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Complete offline playable Slither.io clone in HTML5 Canvas and Web Audio API",
+  "main": "index.html",
+  "scripts": {
+    "build": "npx esbuild js/game.js --bundle --outfile=js/bundle.js --format=iife",
+    "serve": "python -m http.server 8080"
+  },
+  "keywords": [
+    "game",
+    "slither",
+    "canvas",
+    "offline",
+    "html5"
+  ],
+  "author": "",
+  "license": "MIT"
+}
