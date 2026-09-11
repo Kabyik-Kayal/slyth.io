@@ -1,8 +1,8 @@
 {
-  "name": "slither-offline",
+  "name": "slyth.io",
   "version": "1.0.0",
   "type": "module",
-  "description": "Complete offline playable Slither.io clone in HTML5 Canvas and Web Audio API",
+  "description": "Complete offline playable Slyth.io clone in HTML5 Canvas and Web Audio API",
   "main": "index.html",
   "scripts": {
     "build": "npx esbuild js/game.js --bundle --outfile=js/bundle.js --format=iife",
@@ -10,6 +10,8 @@
   },
   "keywords": [
     "game",
+    "slyth",
+    "slyth.io",
     "slither",
     "canvas",
     "offline",

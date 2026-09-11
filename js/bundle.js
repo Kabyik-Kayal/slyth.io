@@ -519,7 +519,7 @@
     "NeonShadow",
     "GlitchWorm",
     "Slinky",
-    "SlitherLord",
+    "SlythLord",
     "ApexPredator",
     "CosmicCoil",
     "Hyperion",
@@ -577,8 +577,8 @@
       this.boostGain = null;
       this.boostFilter = null;
       this.isBoostPlaying = false;
-      this.muted = localStorage.getItem("slither_muted") === "true";
-      this.volume = parseFloat(localStorage.getItem("slither_volume") ?? "0.4");
+      this.muted = (localStorage.getItem("slyth_muted") ?? localStorage.getItem("slither_muted")) === "true";
+      this.volume = parseFloat(localStorage.getItem("slyth_volume") ?? localStorage.getItem("slither_volume") ?? "0.4");
       this.lastEatTime = 0;
       this.comboCount = 0;
     }
@@ -618,7 +618,7 @@
     }
     setMuted(muted) {
       this.muted = muted;
-      localStorage.setItem("slither_muted", this.muted);
+      localStorage.setItem("slyth_muted", this.muted);
       if (this.masterGain && this.ctx) {
         const now = this.ctx.currentTime;
         this.masterGain.gain.cancelScheduledValues(now);
@@ -627,7 +627,7 @@
     }
     setVolume(volume) {
       this.volume = Math.max(0, Math.min(1, volume));
-      localStorage.setItem("slither_volume", this.volume);
+      localStorage.setItem("slyth_volume", this.volume);
       if (this.masterGain && this.ctx && !this.muted) {
         const now = this.ctx.currentTime;
         this.masterGain.gain.cancelScheduledValues(now);
@@ -1565,10 +1565,11 @@
       if (this.invulnerableTimer > 0) return false;
       const checkRadius = this.radius * 1.1;
       const candidates = spatialGrid.queryCircle(this.x, this.y, checkRadius + CONFIG.MAX_RADIUS);
+      const resolvedSnakeMap = snakeMap || (allSnakes ? new Map(allSnakes.map((s) => [s.id, s])) : /* @__PURE__ */ new Map());
       for (let i = 0; i < candidates.length; i++) {
         const seg = candidates[i];
         if (seg.snakeId === void 0 || seg.snakeId === this.id) continue;
-        const otherSnake = snakeMap.get(seg.snakeId);
+        const otherSnake = resolvedSnakeMap.get(seg.snakeId);
         if (!otherSnake || otherSnake.dead || otherSnake.invulnerableTimer > 0) continue;
         if (seg.isHead) {
           const headDist = Math.hypot(this.x - otherSnake.x, this.y - otherSnake.y);
@@ -2221,16 +2222,16 @@
       this.initEventListeners();
     }
     loadProfile() {
-      const savedNick = localStorage.getItem("slither_nickname");
+      const savedNick = localStorage.getItem("slyth_nickname") || localStorage.getItem("slither_nickname");
       if (savedNick) {
         this.nicknameInput.value = savedNick;
       }
-      const savedSkin = localStorage.getItem("slither_skin");
+      const savedSkin = localStorage.getItem("slyth_skin") || localStorage.getItem("slither_skin");
       if (savedSkin) {
         const idx = SKINS.findIndex((s) => s.id === savedSkin);
         if (idx !== -1) this.selectedSkinIndex = idx;
       }
-      const savedBest = localStorage.getItem("slither_best_score") || "0";
+      const savedBest = localStorage.getItem("slyth_best_score") || localStorage.getItem("slither_best_score") || "0";
       if (this.bestScoreVal) {
         this.bestScoreVal.textContent = savedBest;
       }
@@ -2302,8 +2303,8 @@
     startGame() {
       const nick = this.nicknameInput.value.trim() || "Player";
       const skin = SKINS[this.selectedSkinIndex];
-      localStorage.setItem("slither_nickname", nick);
-      localStorage.setItem("slither_skin", skin.id);
+      localStorage.setItem("slyth_nickname", nick);
+      localStorage.setItem("slyth_skin", skin.id);
       this.startMenu.classList.add("hidden");
       this.gameOverMenu.classList.add("hidden");
       this.hudElement.classList.remove("hidden");
@@ -2325,9 +2326,9 @@
       this.finalKills.textContent = kills;
       this.finalTime.textContent = timeFormatted;
       this.finalRank.textContent = `#${Math.min(this.highestRankAchieved, stats.rank || 1)}`;
-      const best = parseInt(localStorage.getItem("slither_best_score") || "0", 10);
+      const best = parseInt(localStorage.getItem("slyth_best_score") || localStorage.getItem("slither_best_score") || "0", 10);
       if (score > best) {
-        localStorage.setItem("slither_best_score", score);
+        localStorage.setItem("slyth_best_score", score);
         this.bestScoreVal.textContent = score;
       } else {
         this.bestScoreVal.textContent = best;
@@ -2808,6 +2809,8 @@
     }
   };
   window.addEventListener("DOMContentLoaded", () => {
-    window.slitherGame = new Game();
+    const game = new Game();
+    window.slythGame = game;
+    window.slitherGame = game;
   });
 })();

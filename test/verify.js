@@ -16,7 +16,7 @@ function assert(condition, message) {
   }
 }
 
-console.log('--- Running Slither.io Logic Verification ---');
+console.log('--- Running Slyth.io Logic Verification ---');
 
 // 1. Verify Spatial Grid
 const grid = new SpatialGrid(CONFIG.SPATIAL_CELL_SIZE);
@@ -102,4 +102,4 @@ const combatSnakes = [snakeA, snakeB];
 const collisionA = snakeA.checkCollisions(combatSnakes, combatGrid, null, particles, foodMgr);
 assert(collisionA === true && snakeA.dead === true && snakeB.dead === true, 'Equal-mass head-on collision causes mutual destruction');
 
-console.log('--- All Slither.io Verification Tests Passed! ---');
+console.log('--- All Slyth.io Verification Tests Passed! ---');

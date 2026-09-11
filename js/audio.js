@@ -10,8 +10,8 @@ class AudioEngine {
     this.isBoostPlaying = false;
     
     // Load volume and mute preferences
-    this.muted = localStorage.getItem('slither_muted') === 'true';
-    this.volume = parseFloat(localStorage.getItem('slither_volume') ?? '0.4');
+    this.muted = (localStorage.getItem('slyth_muted') ?? localStorage.getItem('slither_muted')) === 'true';
+    this.volume = parseFloat(localStorage.getItem('slyth_volume') ?? localStorage.getItem('slither_volume') ?? '0.4');
     
     // Combo tracker for ascending eat chimes
     this.lastEatTime = 0;
@@ -65,7 +65,7 @@ class AudioEngine {
 
   setMuted(muted) {
     this.muted = muted;
-    localStorage.setItem('slither_muted', this.muted);
+    localStorage.setItem('slyth_muted', this.muted);
     if (this.masterGain && this.ctx) {
       const now = this.ctx.currentTime;
       this.masterGain.gain.cancelScheduledValues(now);
@@ -75,7 +75,7 @@ class AudioEngine {
 
   setVolume(volume) {
     this.volume = Math.max(0, Math.min(1, volume));
-    localStorage.setItem('slither_volume', this.volume);
+    localStorage.setItem('slyth_volume', this.volume);
     if (this.masterGain && this.ctx && !this.muted) {
       const now = this.ctx.currentTime;
       this.masterGain.gain.cancelScheduledValues(now);

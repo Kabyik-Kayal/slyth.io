@@ -1,6 +1,6 @@
-# 🐍 Slither.io - Complete Offline Playable Game
+# 🐍 Slyth.io - Complete Offline Playable Game
 
-A high-performance, feature-complete offline clone of the classic **Slither.io** built with pure HTML5 Canvas, Web Audio API, and modern ES6 JavaScript.
+A high-performance, feature-complete offline clone of the classic **Slyth.io** (inspired by Slither.io) built with pure HTML5 Canvas, Web Audio API, and modern ES6 JavaScript.
 
 **100% Offline & Zero Dependencies**: Runs directly in any web browser without needing an internet connection, node packages, or server backends.
 
@@ -98,7 +98,7 @@ You can launch the game using either of these methods:
 ## 📁 Project Structure
 
 ```
-vibrant-newton/
+slyth.io/
 ├── index.html           # Main HTML5 entry point and UI markup
 ├── css/
 │   └── style.css        # Cyber-neon styling, glassmorphism, responsive layout

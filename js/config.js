@@ -497,7 +497,7 @@ export const BOT_PERSONALITIES = {
 
 // Bot Names pool
 export const BOT_NAMES = [
-  'ViperX', 'NeonShadow', 'GlitchWorm', 'Slinky', 'SlitherLord',
+  'ViperX', 'NeonShadow', 'GlitchWorm', 'Slinky', 'SlythLord',
   'ApexPredator', 'CosmicCoil', 'Hyperion', 'ZeroG', 'Kaa',
   'Ouroboros', 'Python3', 'Worminator', 'SneakyNoodle', 'TitanBoa',
   'GhostRider', 'Draco', 'CobraKai', 'Venomous', 'Sparky',

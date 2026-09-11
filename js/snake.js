@@ -318,13 +318,15 @@ export class Snake {
     const checkRadius = this.radius * 1.1;
     const candidates = spatialGrid.queryCircle(this.x, this.y, checkRadius + CONFIG.MAX_RADIUS);
 
+    const resolvedSnakeMap = snakeMap || (allSnakes ? new Map(allSnakes.map(s => [s.id, s])) : new Map());
+
     for (let i = 0; i < candidates.length; i++) {
       const seg = candidates[i];
       // Skip non-segments (e.g. food) or own segments (safe self-coiling!)
       if (seg.snakeId === undefined || seg.snakeId === this.id) continue;
 
       // O(1) lookup via pre-built map rather than O(n) allSnakes.find()
-      const otherSnake = snakeMap.get(seg.snakeId);
+      const otherSnake = resolvedSnakeMap.get(seg.snakeId);
       if (!otherSnake || otherSnake.dead || otherSnake.invulnerableTimer > 0) continue;
 
       // Head-to-head collision against enemy head

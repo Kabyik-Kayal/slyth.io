@@ -68,18 +68,18 @@ export class UIManager {
   }
 
   loadProfile() {
-    const savedNick = localStorage.getItem('slither_nickname');
+    const savedNick = localStorage.getItem('slyth_nickname') || localStorage.getItem('slither_nickname');
     if (savedNick) {
       this.nicknameInput.value = savedNick;
     }
 
-    const savedSkin = localStorage.getItem('slither_skin');
+    const savedSkin = localStorage.getItem('slyth_skin') || localStorage.getItem('slither_skin');
     if (savedSkin) {
       const idx = SKINS.findIndex(s => s.id === savedSkin);
       if (idx !== -1) this.selectedSkinIndex = idx;
     }
 
-    const savedBest = localStorage.getItem('slither_best_score') || '0';
+    const savedBest = localStorage.getItem('slyth_best_score') || localStorage.getItem('slither_best_score') || '0';
     if (this.bestScoreVal) {
       this.bestScoreVal.textContent = savedBest;
     }
@@ -172,8 +172,8 @@ export class UIManager {
     const nick = this.nicknameInput.value.trim() || 'Player';
     const skin = SKINS[this.selectedSkinIndex];
 
-    localStorage.setItem('slither_nickname', nick);
-    localStorage.setItem('slither_skin', skin.id);
+    localStorage.setItem('slyth_nickname', nick);
+    localStorage.setItem('slyth_skin', skin.id);
 
     this.startMenu.classList.add('hidden');
     this.gameOverMenu.classList.add('hidden');
@@ -202,9 +202,9 @@ export class UIManager {
     this.finalRank.textContent = `#${Math.min(this.highestRankAchieved, stats.rank || 1)}`;
 
     // Update personal best
-    const best = parseInt(localStorage.getItem('slither_best_score') || '0', 10);
+    const best = parseInt(localStorage.getItem('slyth_best_score') || localStorage.getItem('slither_best_score') || '0', 10);
     if (score > best) {
-      localStorage.setItem('slither_best_score', score);
+      localStorage.setItem('slyth_best_score', score);
       this.bestScoreVal.textContent = score;
     } else {
       this.bestScoreVal.textContent = best;

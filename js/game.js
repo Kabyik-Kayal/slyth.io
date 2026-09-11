@@ -458,5 +458,7 @@ export class Game {
 
 // Instantiate game on window load
 window.addEventListener('DOMContentLoaded', () => {
-  window.slitherGame = new Game();
+  const game = new Game();
+  window.slythGame = game;
+  window.slitherGame = game; // Alias for backward compatibility
 });
