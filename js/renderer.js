@@ -22,6 +22,7 @@ export class Renderer {
     // Camera state
     this.cameraX = 0;
     this.cameraY = 0;
+    this.cameraInitialized = false;
     this.zoom = CONFIG.BASE_ZOOM || 0.78;
     this.targetZoom = CONFIG.BASE_ZOOM || 0.78;
 
@@ -51,16 +52,33 @@ export class Renderer {
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
   }
 
-  updateCamera(targetX, targetY, targetRadius, dt) {
-    // Lock camera directly on player head for precise, zero-drift mouse steering
-    this.cameraX = targetX;
-    this.cameraY = targetY;
+  resetCamera(x, y) {
+    this.cameraX = x;
+    this.cameraY = y;
+    this.cameraInitialized = true;
+  }
 
-    // Smooth zoom scaling based on player size
+  updateCamera(targetX, targetY, targetRadius, isBoosting = false, dt = 0.016) {
+    if (!this.cameraInitialized) {
+      this.cameraX = targetX;
+      this.cameraY = targetY;
+      this.cameraInitialized = true;
+    } else {
+      // Smooth camera follow: allows the snake head to visually surge forward during boost
+      // instead of being rigidly frozen in the screen center (which caused the optical illusion that other snakes were speeding up)
+      const followSpeed = isBoosting ? 14 : 9.5;
+      const lerp = Math.min(1, followSpeed * dt);
+      this.cameraX += (targetX - this.cameraX) * lerp;
+      this.cameraY += (targetY - this.cameraY) * lerp;
+    }
+
+    // Smooth zoom scaling based on player size AND dynamic boost FOV expansion
     const baseZoom = CONFIG.BASE_ZOOM || 0.78;
-    const zoomRatio = baseZoom - (targetRadius - CONFIG.BASE_RADIUS) * 0.010;
-    this.targetZoom = Math.max(CONFIG.MIN_ZOOM, Math.min(CONFIG.MAX_ZOOM, zoomRatio));
-    this.zoom += (this.targetZoom - this.zoom) * Math.min(1, 0.06 * dt * 60);
+    const sizeZoomRatio = baseZoom - (targetRadius - CONFIG.BASE_RADIUS) * 0.010;
+    // When boosting, camera smoothly pulls back by 10% creating a genuine sense of forward acceleration
+    const boostZoomMultiplier = isBoosting ? 0.90 : 1.0;
+    this.targetZoom = Math.max(CONFIG.MIN_ZOOM, Math.min(CONFIG.MAX_ZOOM, sizeZoomRatio * boostZoomMultiplier));
+    this.zoom += (this.targetZoom - this.zoom) * Math.min(1, 0.08 * dt * 60);
 
     // Calculate visible world bounding box
     const halfW = (this.width / (2 * this.zoom)) + 100;

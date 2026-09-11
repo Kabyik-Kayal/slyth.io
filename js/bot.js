@@ -16,6 +16,8 @@ export class BotSnake extends Snake {
     this.wanderTimer = 0;
     this.tacticalMode = 'WANDER'; // 'CUT_OFF', 'COIL', 'HEAD_JOUST', 'FEAST', 'WANDER'
     this.cutOffTimer = 0;
+    this.boostCooldown = Math.random() * 2.0; // Rest timer between sprints
+    this.boostDuration = 0;                  // Active sprint duration limiter
     this._scratchCandidates = [];
   }
 
@@ -26,6 +28,19 @@ export class BotSnake extends Snake {
     this.decisionTimer -= dt;
     this.wanderTimer -= dt;
     if (this.cutOffTimer > 0) this.cutOffTimer -= dt;
+    if (this.boostCooldown > 0) this.boostCooldown -= dt;
+
+    // Cap bot boost sprint duration to prevent non-stop sprinting
+    if (this.isBoosting) {
+      this.boostDuration += dt;
+      if (this.boostDuration > 0.65) {
+        this.isBoosting = false;
+        this.boostDuration = 0;
+        this.boostCooldown = 2.5 + Math.random() * 2.0; // Enforce cruising rest period
+      }
+    } else {
+      this.boostDuration = 0;
+    }
 
     // 1. Boundary Safety Check (World Perimeter)
     const distFromCenter = Math.hypot(this.x, this.y);
@@ -41,8 +56,8 @@ export class BotSnake extends Snake {
     const avoidance = this.evaluateSensoryFeelers(spatialGrid, snakeMap);
     if (avoidance.danger) {
       this.targetAngle = avoidance.suggestedAngle;
-      // Boost only if urgent escape needed and not cutting into another wall
-      if (avoidance.highDanger && this.mass > 25 && Math.random() < this.personality.boostChance) {
+      // Boost only if urgent escape needed, not on cooldown, and random check passes
+      if (avoidance.highDanger && this.boostCooldown <= 0 && this.mass > 25 && Math.random() < this.personality.boostChance) {
         this.isBoosting = true;
       } else {
         this.isBoosting = false;
@@ -197,7 +212,7 @@ export class BotSnake extends Snake {
     const deathDropCluster = this.findDeathDropCluster(foodManager);
     if (deathDropCluster && (this.personality.foodAttraction >= 1.0 || Math.random() < 0.6)) {
       this.targetAngle = Math.atan2(deathDropCluster.y - this.y, deathDropCluster.x - this.x);
-      this.isBoosting = deathDropCluster.dist > 60 && deathDropCluster.dist < CONFIG.BOT_FEAST_SEARCH_RADIUS && this.mass > 25;
+      this.isBoosting = this.boostCooldown <= 0 && deathDropCluster.dist > 80 && deathDropCluster.dist < CONFIG.BOT_FEAST_SEARCH_RADIUS && this.mass > 25 && Math.random() < this.personality.boostChance;
       this.tacticalMode = 'FEAST';
       return;
     }
@@ -211,7 +226,7 @@ export class BotSnake extends Snake {
         // Head-to-Head Joust: If we are bigger by 35% and close, ram straight at their face!
         if (this.mass > prey.mass * 1.35 && distToPrey < CONFIG.BOT_HEAD_JOUST_DIST) {
           this.targetAngle = Math.atan2(prey.y - this.y, prey.x - this.x);
-          this.isBoosting = this.mass > 25;
+          this.isBoosting = this.boostCooldown <= 0 && this.mass > 25;
           this.tacticalMode = 'HEAD_JOUST';
           return;
         }
@@ -231,9 +246,9 @@ export class BotSnake extends Snake {
         this.targetAngle = Math.atan2(cutTargetY - this.y, cutTargetX - this.x);
 
         // Sprint boost when close enough to shut the trap
-        if (distToPrey < CONFIG.BOT_CUT_OFF_MAX_DIST && distToPrey > CONFIG.BOT_CUT_OFF_MIN_DIST && Math.random() < this.personality.boostChance) {
+        if (this.boostCooldown <= 0 && distToPrey < CONFIG.BOT_CUT_OFF_MAX_DIST && distToPrey > CONFIG.BOT_CUT_OFF_MIN_DIST && Math.random() < this.personality.boostChance) {
           this.isBoosting = true;
-          this.cutOffTimer = 0.5;
+          this.cutOffTimer = 0.45;
         } else if (this.cutOffTimer <= 0) {
           this.isBoosting = false;
         }
@@ -251,7 +266,7 @@ export class BotSnake extends Snake {
         // Tangential inward spiral (~75 degrees off victim center)
         const orbitDir = (this.id.charCodeAt(0) % 2 === 0) ? 1 : -1;
         this.targetAngle = angleToVictim + orbitDir * (Math.PI * 0.5 + 0.22);
-        this.isBoosting = this.mass > 50 && Math.random() < 0.4;
+        this.isBoosting = this.boostCooldown <= 0 && this.mass > 50 && Math.random() < 0.25;
         this.tacticalMode = 'COIL';
         return;
       }

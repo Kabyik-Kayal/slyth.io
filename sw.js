@@ -1,5 +1,5 @@
 // Service Worker for Slyth.io - enables offline caching and zero network usage after initial load
-const CACHE_NAME = 'slyth-v1';
+const CACHE_NAME = 'slyth-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

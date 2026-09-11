@@ -458,11 +458,24 @@ export class Snake {
     // Head base circle
     ctx.fillStyle = this.skin.primary;
     ctx.shadowColor = this.skin.glow;
-    ctx.shadowBlur = this.isBoosting ? 18 : 8;
+    ctx.shadowBlur = this.isBoosting ? 24 : 8;
     ctx.beginPath();
     ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
+
+    // Outer luminous speed corona when boosting
+    if (this.isBoosting) {
+      ctx.save();
+      ctx.strokeStyle = this.skin.glow;
+      ctx.lineWidth = 2.4;
+      ctx.shadowColor = this.skin.glow;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(head.x, head.y, headRadius * 1.25, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // Eye sockets placement relative to head angle
     const eyeForwardOffset = headRadius * 0.38;

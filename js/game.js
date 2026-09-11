@@ -172,6 +172,7 @@ export class Game {
     const startX = (Math.random() - 0.5) * 600;
     const startY = (Math.random() - 0.5) * 600;
     this.player = new Snake('player', playerName, startX, startY, skinId, true);
+    this.renderer.resetCamera(startX, startY);
 
     // Initialize bot population with varied sizes and points
     this.snakes = [this.player];
@@ -409,7 +410,8 @@ export class Game {
 
     // 9. Update camera tracking
     if (this.player && !this.player.dead) {
-      this.renderer.updateCamera(this.player.x, this.player.y, this.player.radius, dt);
+      const isBoosting = this.player.isBoosting && this.player.mass > CONFIG.MIN_BOOST_MASS;
+      this.renderer.updateCamera(this.player.x, this.player.y, this.player.radius, isBoosting, dt);
     }
 
     // 10. Periodic Leaderboard and Minimap updates

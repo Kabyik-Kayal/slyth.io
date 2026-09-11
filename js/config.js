@@ -40,7 +40,7 @@ export const CONFIG = {
   BOT_SAFE_SPAWN_ATTEMPTS: 25,    // Max placement tries to satisfy the distance constraint
   BOT_CUT_OFF_DETECT_DIST: 260,   // Distance threshold to detect an incoming cut-off threat
   BOT_HEAD_JOUST_DIST: 220,       // Distance at which to switch to head-joust mode
-  BOT_CUT_OFF_MAX_DIST: 360,      // Max distance for sprint cut-off boost engagement
+  BOT_CUT_OFF_MAX_DIST: 200,      // Max distance for sprint cut-off boost engagement (tightened so bots don't boost from afar)
   BOT_CUT_OFF_MIN_DIST: 45,       // Min distance below which cut-off boost is not triggered
   BOT_HUNT_RADIUS: 650,           // Search radius for hunting targets
   BOT_FEAST_SEARCH_RADIUS: 450,   // Search radius for death-drop clusters
@@ -465,32 +465,32 @@ export const BOT_PERSONALITIES = {
     name: 'Forager',
     foodAttraction: 1.6,
     snakeAvoidance: 1.5,
-    boostChance: 0.35,
-    huntingAggression: 0.9,
+    boostChance: 0.12,
+    huntingAggression: 0.6,
     feelerLength: 140
   },
   HUNTER: {
     name: 'Hunter',
     foodAttraction: 0.7,
     snakeAvoidance: 0.95,
-    boostChance: 0.85,
-    huntingAggression: 2.5,
+    boostChance: 0.40,
+    huntingAggression: 1.8,
     feelerLength: 180
   },
   SCAVENGER: {
     name: 'Scavenger',
     foodAttraction: 2.0,
     snakeAvoidance: 1.2,
-    boostChance: 0.60,
-    huntingAggression: 1.4,
+    boostChance: 0.25,
+    huntingAggression: 1.0,
     feelerLength: 150
   },
   COILER: {
     name: 'Coiler',
     foodAttraction: 0.8,
     snakeAvoidance: 1.1,
-    boostChance: 0.70,
-    huntingAggression: 2.0,
+    boostChance: 0.30,
+    huntingAggression: 1.5,
     feelerLength: 170
   }
 };

@@ -57,8 +57,8 @@
     // Distance threshold to detect an incoming cut-off threat
     BOT_HEAD_JOUST_DIST: 220,
     // Distance at which to switch to head-joust mode
-    BOT_CUT_OFF_MAX_DIST: 360,
-    // Max distance for sprint cut-off boost engagement
+    BOT_CUT_OFF_MAX_DIST: 200,
+    // Max distance for sprint cut-off boost engagement (tightened so bots don't boost from afar)
     BOT_CUT_OFF_MIN_DIST: 45,
     // Min distance below which cut-off boost is not triggered
     BOT_HUNT_RADIUS: 650,
@@ -485,32 +485,32 @@
       name: "Forager",
       foodAttraction: 1.6,
       snakeAvoidance: 1.5,
-      boostChance: 0.35,
-      huntingAggression: 0.9,
+      boostChance: 0.12,
+      huntingAggression: 0.6,
       feelerLength: 140
     },
     HUNTER: {
       name: "Hunter",
       foodAttraction: 0.7,
       snakeAvoidance: 0.95,
-      boostChance: 0.85,
-      huntingAggression: 2.5,
+      boostChance: 0.4,
+      huntingAggression: 1.8,
       feelerLength: 180
     },
     SCAVENGER: {
       name: "Scavenger",
       foodAttraction: 2,
       snakeAvoidance: 1.2,
-      boostChance: 0.6,
-      huntingAggression: 1.4,
+      boostChance: 0.25,
+      huntingAggression: 1,
       feelerLength: 150
     },
     COILER: {
       name: "Coiler",
       foodAttraction: 0.8,
       snakeAvoidance: 1.1,
-      boostChance: 0.7,
-      huntingAggression: 2,
+      boostChance: 0.3,
+      huntingAggression: 1.5,
       feelerLength: 170
     }
   };
@@ -1671,11 +1671,22 @@
       }
       ctx.fillStyle = this.skin.primary;
       ctx.shadowColor = this.skin.glow;
-      ctx.shadowBlur = this.isBoosting ? 18 : 8;
+      ctx.shadowBlur = this.isBoosting ? 24 : 8;
       ctx.beginPath();
       ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
+      if (this.isBoosting) {
+        ctx.save();
+        ctx.strokeStyle = this.skin.glow;
+        ctx.lineWidth = 2.4;
+        ctx.shadowColor = this.skin.glow;
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, headRadius * 1.25, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
       const eyeForwardOffset = headRadius * 0.38;
       const eyeLateralOffset = headRadius * 0.55;
       const eyeRadius = Math.max(3.5, headRadius * 0.36);
@@ -1742,6 +1753,8 @@
       this.wanderTimer = 0;
       this.tacticalMode = "WANDER";
       this.cutOffTimer = 0;
+      this.boostCooldown = Math.random() * 2;
+      this.boostDuration = 0;
       this._scratchCandidates = [];
     }
     // snakeMap: Map<id, Snake> built once per frame in Game.update() for O(1) lookups.
@@ -1750,6 +1763,17 @@
       this.decisionTimer -= dt;
       this.wanderTimer -= dt;
       if (this.cutOffTimer > 0) this.cutOffTimer -= dt;
+      if (this.boostCooldown > 0) this.boostCooldown -= dt;
+      if (this.isBoosting) {
+        this.boostDuration += dt;
+        if (this.boostDuration > 0.65) {
+          this.isBoosting = false;
+          this.boostDuration = 0;
+          this.boostCooldown = 2.5 + Math.random() * 2;
+        }
+      } else {
+        this.boostDuration = 0;
+      }
       const distFromCenter = Math.hypot(this.x, this.y);
       if (distFromCenter > CONFIG.WORLD_RADIUS - CONFIG.BOT_BOUNDARY_WARN_DIST) {
         const toCenter = Math.atan2(-this.y, -this.x);
@@ -1761,7 +1785,7 @@
       const avoidance = this.evaluateSensoryFeelers(spatialGrid, snakeMap);
       if (avoidance.danger) {
         this.targetAngle = avoidance.suggestedAngle;
-        if (avoidance.highDanger && this.mass > 25 && Math.random() < this.personality.boostChance) {
+        if (avoidance.highDanger && this.boostCooldown <= 0 && this.mass > 25 && Math.random() < this.personality.boostChance) {
           this.isBoosting = true;
         } else {
           this.isBoosting = false;
@@ -1889,7 +1913,7 @@
       const deathDropCluster = this.findDeathDropCluster(foodManager);
       if (deathDropCluster && (this.personality.foodAttraction >= 1 || Math.random() < 0.6)) {
         this.targetAngle = Math.atan2(deathDropCluster.y - this.y, deathDropCluster.x - this.x);
-        this.isBoosting = deathDropCluster.dist > 60 && deathDropCluster.dist < CONFIG.BOT_FEAST_SEARCH_RADIUS && this.mass > 25;
+        this.isBoosting = this.boostCooldown <= 0 && deathDropCluster.dist > 80 && deathDropCluster.dist < CONFIG.BOT_FEAST_SEARCH_RADIUS && this.mass > 25 && Math.random() < this.personality.boostChance;
         this.tacticalMode = "FEAST";
         return;
       }
@@ -1899,7 +1923,7 @@
           const distToPrey = Math.hypot(prey.x - this.x, prey.y - this.y);
           if (this.mass > prey.mass * 1.35 && distToPrey < CONFIG.BOT_HEAD_JOUST_DIST) {
             this.targetAngle = Math.atan2(prey.y - this.y, prey.x - this.x);
-            this.isBoosting = this.mass > 25;
+            this.isBoosting = this.boostCooldown <= 0 && this.mass > 25;
             this.tacticalMode = "HEAD_JOUST";
             return;
           }
@@ -1912,9 +1936,9 @@
           const cutTargetX = predX + cutSide * Math.sin(prey.angle) * offset;
           const cutTargetY = predY - cutSide * Math.cos(prey.angle) * offset;
           this.targetAngle = Math.atan2(cutTargetY - this.y, cutTargetX - this.x);
-          if (distToPrey < CONFIG.BOT_CUT_OFF_MAX_DIST && distToPrey > CONFIG.BOT_CUT_OFF_MIN_DIST && Math.random() < this.personality.boostChance) {
+          if (this.boostCooldown <= 0 && distToPrey < CONFIG.BOT_CUT_OFF_MAX_DIST && distToPrey > CONFIG.BOT_CUT_OFF_MIN_DIST && Math.random() < this.personality.boostChance) {
             this.isBoosting = true;
-            this.cutOffTimer = 0.5;
+            this.cutOffTimer = 0.45;
           } else if (this.cutOffTimer <= 0) {
             this.isBoosting = false;
           }
@@ -1928,7 +1952,7 @@
           const angleToVictim = Math.atan2(coilPrey.y - this.y, coilPrey.x - this.x);
           const orbitDir = this.id.charCodeAt(0) % 2 === 0 ? 1 : -1;
           this.targetAngle = angleToVictim + orbitDir * (Math.PI * 0.5 + 0.22);
-          this.isBoosting = this.mass > 50 && Math.random() < 0.4;
+          this.isBoosting = this.boostCooldown <= 0 && this.mass > 50 && Math.random() < 0.25;
           this.tacticalMode = "COIL";
           return;
         }
@@ -2043,6 +2067,7 @@
       this.dpr = Math.min(window.devicePixelRatio || 1, 2);
       this.cameraX = 0;
       this.cameraY = 0;
+      this.cameraInitialized = false;
       this.zoom = CONFIG.BASE_ZOOM || 0.78;
       this.targetZoom = CONFIG.BASE_ZOOM || 0.78;
       this.viewport = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
@@ -2060,13 +2085,27 @@
       this.canvas.style.height = `${this.height}px`;
       this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     }
-    updateCamera(targetX, targetY, targetRadius, dt) {
-      this.cameraX = targetX;
-      this.cameraY = targetY;
+    resetCamera(x, y) {
+      this.cameraX = x;
+      this.cameraY = y;
+      this.cameraInitialized = true;
+    }
+    updateCamera(targetX, targetY, targetRadius, isBoosting = false, dt = 0.016) {
+      if (!this.cameraInitialized) {
+        this.cameraX = targetX;
+        this.cameraY = targetY;
+        this.cameraInitialized = true;
+      } else {
+        const followSpeed = isBoosting ? 14 : 9.5;
+        const lerp = Math.min(1, followSpeed * dt);
+        this.cameraX += (targetX - this.cameraX) * lerp;
+        this.cameraY += (targetY - this.cameraY) * lerp;
+      }
       const baseZoom = CONFIG.BASE_ZOOM || 0.78;
-      const zoomRatio = baseZoom - (targetRadius - CONFIG.BASE_RADIUS) * 0.01;
-      this.targetZoom = Math.max(CONFIG.MIN_ZOOM, Math.min(CONFIG.MAX_ZOOM, zoomRatio));
-      this.zoom += (this.targetZoom - this.zoom) * Math.min(1, 0.06 * dt * 60);
+      const sizeZoomRatio = baseZoom - (targetRadius - CONFIG.BASE_RADIUS) * 0.01;
+      const boostZoomMultiplier = isBoosting ? 0.9 : 1;
+      this.targetZoom = Math.max(CONFIG.MIN_ZOOM, Math.min(CONFIG.MAX_ZOOM, sizeZoomRatio * boostZoomMultiplier));
+      this.zoom += (this.targetZoom - this.zoom) * Math.min(1, 0.08 * dt * 60);
       const halfW = this.width / (2 * this.zoom) + 100;
       const halfH = this.height / (2 * this.zoom) + 100;
       this.viewport.minX = this.cameraX - halfW;
@@ -2602,6 +2641,7 @@
       const startX = (Math.random() - 0.5) * 600;
       const startY = (Math.random() - 0.5) * 600;
       this.player = new Snake("player", playerName, startX, startY, skinId, true);
+      this.renderer.resetCamera(startX, startY);
       this.snakes = [this.player];
       this.botRespawnQueue = [];
       const shuffledNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
@@ -2771,7 +2811,8 @@
       }
       this.snakes = this.snakes.filter((s) => !s.dead || s.isPlayer);
       if (this.player && !this.player.dead) {
-        this.renderer.updateCamera(this.player.x, this.player.y, this.player.radius, dt);
+        const isBoosting = this.player.isBoosting && this.player.mass > CONFIG.MIN_BOOST_MASS;
+        this.renderer.updateCamera(this.player.x, this.player.y, this.player.radius, isBoosting, dt);
       }
       this.leaderboardTimer += dt;
       if (this.leaderboardTimer >= 0.25) {
