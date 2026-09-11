@@ -1,4 +1,4 @@
-// Procedural Audio Engine using Web Audio API (Zero external assets, works 100% offline)
+// Procedural Audio Engine using Web Audio API (Zero external assets, synthesized client-side in browser)
 
 class AudioEngine {
   constructor() {

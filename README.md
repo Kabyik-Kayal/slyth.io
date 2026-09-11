@@ -1,25 +1,30 @@
-# 🐍 Slyth.io - Complete Offline Playable Game
+# 🐍 Slyth.io - Real-Time Browser Snake Arena
 
-A high-performance, feature-complete offline clone of the classic **Slyth.io** (inspired by Slither.io) built with pure HTML5 Canvas, Web Audio API, and modern ES6 JavaScript.
+A high-performance, feature-complete web arena built with pure HTML5 Canvas, Web Audio API, and modern ES6 JavaScript.
 
-**100% Offline & Zero Dependencies**: Runs directly in any web browser without needing an internet connection, node packages, or server backends.
+🌐 **Play Live**: [https://slyth.kabyik.dev](https://slyth.kabyik.dev)
+
+⚡ **Zero Runtime Network Usage**: Runs 100% client-side inside the player's browser. Once the initial bundle loads, **there is zero internet usage**—even if your network drops or disconnects mid-game, gameplay continues smoothly with zero latency, zero packet loss, and zero background network calls. Equipped with a Service Worker for offline load resilience.
 
 ---
 
 ## 🎮 How to Play
 
-### Quick Start
-You can launch the game using either of these methods:
-1. **Direct File Launch**: Double-click `index.html` in your file explorer to open it in Chrome, Edge, Firefox, or Safari.
-2. **Local HTTP Server** (Recommended for local module security policies):
-   ```powershell
-   # Using Python
-   python -m http.server 8080
+### 1. Instant Online Play
+Navigate to **[https://slyth.kabyik.dev](https://slyth.kabyik.dev)** in any modern desktop or mobile browser.
 
-   # Or using Node
-   npx serve .
-   ```
-   Then open `http://localhost:8080` in your browser.
+### 2. Local / Development Launch
+You can also launch locally without external servers:
+- **Direct File Launch**: Double-click `index.html` in your file explorer.
+- **Local HTTP Server**:
+  ```cmd
+  # Using Python
+  python -m http.server 8080
+
+  # Or using Node
+  npx serve .
+  ```
+  Then open `http://localhost:8080` in your browser.
 
 ---
 

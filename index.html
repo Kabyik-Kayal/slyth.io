@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Slyth.io - Complete Offline Game</title>
+  <title>Slyth.io - Web Combat Arena</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%2300f3ff%22/><circle cx=%2265%22 cy=%2240%22 r=%2210%22 fill=%22%23ffffff%22/><circle cx=%2268%22 cy=%2240%22 r=%225%22 fill=%22%23000000%22/></svg>">
 </head>
@@ -55,7 +55,7 @@
   <div id="start-menu" class="modal-overlay">
     <div class="modal-card glass-panel">
       <h1 class="game-title">SLYTH.IO</h1>
-      <div class="game-subtitle">Offline Combat Arena</div>
+      <div class="game-subtitle">Zero-Latency Client Arena</div>
 
       <!-- Player Nickname -->
       <div class="input-group">
@@ -146,7 +146,16 @@
     </div>
   </div>
 
-  <!-- Game Engine Script (Self-contained bundle for instant file:// & http:// offline play) -->
+  <!-- Game Engine Script (Self-contained client bundle: zero internet usage after initial load) -->
   <script src="js/bundle.js"></script>
+
+  <!-- Service Worker Registration for offline resilience -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
