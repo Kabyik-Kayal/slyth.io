@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Slither.io - Complete Offline Game</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%2300f3ff%22/><circle cx=%2265%22 cy=%2240%22 r=%2210%22 fill=%22%23ffffff%22/><circle cx=%2268%22 cy=%2240%22 r=%225%22 fill=%22%23000000%22/></svg>">
+</head>
+<body>
+
+  <!-- Fullscreen WebGL/Canvas Surface -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- In-Game HUD Layer -->
+  <div id="hud" class="hidden">
+    <!-- Bottom-Left Stats Panel -->
+    <div class="stats-panel glass-panel">
+      <div class="stat-item">
+        <span class="stat-label">Score</span>
+        <span id="score-val" class="stat-val">250</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Length</span>
+        <span id="length-val" class="stat-val">34</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Kills</span>
+        <span id="kills-val" class="stat-val">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Rank</span>
+        <span id="rank-val" class="stat-val">#1</span>
+      </div>
+    </div>
+
+    <!-- Top-Right Live Leaderboard -->
+    <div class="leaderboard-panel glass-panel">
+      <div class="leaderboard-title">Leaderboard</div>
+      <div id="leaderboard-list" class="leaderboard-list">
+        <!-- Dynamically populated rows -->
+      </div>
+    </div>
+
+    <!-- Bottom-Right Radar Minimap -->
+    <div class="minimap-panel glass-panel">
+      <canvas id="minimap-canvas" width="136" height="136"></canvas>
+    </div>
+
+    <!-- Mobile Virtual Touch Boost Button -->
+    <button id="touch-boost-btn">BOOST</button>
+  </div>
+
+  <!-- Start & Customization Menu Overlay -->
+  <div id="start-menu" class="modal-overlay">
+    <div class="modal-card glass-panel">
+      <h1 class="game-title">SLITHER</h1>
+      <div class="game-subtitle">Offline Combat Arena</div>
+
+      <!-- Player Nickname -->
+      <div class="input-group">
+        <input 
+          type="text" 
+          id="nickname-input" 
+          class="text-input" 
+          placeholder="Enter Your Nickname" 
+          maxlength="16" 
+          value="CyberSnake"
+          autocomplete="off"
+          spellcheck="false"
+        >
+      </div>
+
+      <!-- Interactive Skin Carousel -->
+      <div class="skin-selector">
+        <div class="skin-carousel-row">
+          <button id="skin-prev-btn" class="carousel-arrow" aria-label="Previous Skin">◀</button>
+          <div class="skin-canvas-wrapper">
+            <canvas id="skin-preview-canvas" width="170" height="60"></canvas>
+          </div>
+          <button id="skin-next-btn" class="carousel-arrow" aria-label="Next Skin">▶</button>
+        </div>
+        <div id="skin-name" class="skin-name">Electric Neon</div>
+      </div>
+
+      <!-- Bot Population Selection -->
+      <div class="option-row">
+        <span>Arena Density:</span>
+        <div class="bot-buttons-group">
+          <button class="bot-count-btn" data-count="20">Casual (20)</button>
+          <button class="bot-count-btn active" data-count="30">Classic (30)</button>
+          <button class="bot-count-btn" data-count="45">Chaos (45)</button>
+        </div>
+      </div>
+
+      <!-- Audio Settings -->
+      <div class="audio-controls">
+        <button id="mute-btn" class="btn-small">🔊 Sound On</button>
+        <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="0.4" class="slider" aria-label="Volume">
+      </div>
+
+      <!-- Primary Action -->
+      <button id="play-btn" class="btn-primary">PLAY NOW</button>
+
+      <div class="controls-hint">
+        🖱️ Steer with Mouse • ⚡ Left-Click or Space to Boost
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Stats Modal -->
+  <div id="game-over-menu" class="modal-overlay hidden">
+    <div class="modal-card glass-panel">
+      <h2 class="game-over-title">DEFEATED</h2>
+
+      <div class="high-score-banner">
+        Personal Best: <span id="best-score-val">0</span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box highlight">
+          <div class="box-label">Final Score</div>
+          <div id="final-score" class="box-val">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="box-label">Max Length</div>
+          <div id="final-length" class="box-val">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="box-label">Enemies Slain</div>
+          <div id="final-kills" class="box-val">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="box-label">Survival Time</div>
+          <div id="final-time" class="box-val">0:00</div>
+        </div>
+      </div>
+
+      <div class="stat-box" style="margin-bottom: 20px;">
+        <div class="box-label">Highest Rank Reached</div>
+        <div id="final-rank" class="box-val" style="color: #00f3ff;">#1</div>
+      </div>
+
+      <button id="restart-btn" class="btn-primary">PLAY AGAIN</button>
+      <button id="change-skin-btn" class="btn-secondary">CUSTOMIZE SKIN</button>
+    </div>
+  </div>
+
+  <!-- Game Engine Script (Self-contained bundle for instant file:// & http:// offline play) -->
+  <script src="js/bundle.js"></script>
+</body>
+</html>
