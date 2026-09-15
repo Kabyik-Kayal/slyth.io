@@ -16,6 +16,15 @@ export function escapeHTML(str) {
   });
 }
 
+// Safely retrieve persistent value with legacy fallback
+function getSaved(key, legacyKey, fallback = '') {
+  try {
+    return localStorage.getItem(key) || localStorage.getItem(legacyKey) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export class UIManager {
   constructor(game) {
     this.game = game;
@@ -68,18 +77,16 @@ export class UIManager {
   }
 
   loadProfile() {
-    const savedNick = localStorage.getItem('slyth_nickname') || localStorage.getItem('slither_nickname');
+    const savedNick = getSaved('slyth_nickname', 'slither_nickname');
     if (savedNick) {
       this.nicknameInput.value = savedNick;
     }
 
-    const savedSkin = localStorage.getItem('slyth_skin') || localStorage.getItem('slither_skin');
-    if (savedSkin) {
-      const idx = SKINS.findIndex(s => s.id === savedSkin);
-      if (idx !== -1) this.selectedSkinIndex = idx;
-    }
+    const savedSkin = getSaved('slyth_skin', 'slither_skin');
+    const idx = SKINS.findIndex(s => s.id === savedSkin);
+    if (idx !== -1) this.selectedSkinIndex = idx;
 
-    const savedBest = localStorage.getItem('slyth_best_score') || localStorage.getItem('slither_best_score') || '0';
+    const savedBest = getSaved('slyth_best_score', 'slither_best_score', '0');
     if (this.bestScoreVal) {
       this.bestScoreVal.textContent = savedBest;
     }
@@ -202,13 +209,12 @@ export class UIManager {
     this.finalRank.textContent = `#${Math.min(this.highestRankAchieved, stats.rank || 1)}`;
 
     // Update personal best
-    const best = parseInt(localStorage.getItem('slyth_best_score') || localStorage.getItem('slither_best_score') || '0', 10);
+    const best = parseInt(getSaved('slyth_best_score', 'slither_best_score', '0'), 10);
+    const newBest = Math.max(best, score);
     if (score > best) {
       localStorage.setItem('slyth_best_score', score);
-      this.bestScoreVal.textContent = score;
-    } else {
-      this.bestScoreVal.textContent = best;
     }
+    this.bestScoreVal.textContent = newBest;
   }
 
   updateSkinPreview() {

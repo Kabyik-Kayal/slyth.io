@@ -9,13 +9,24 @@ class AudioEngine {
     this.boostFilter = null;
     this.isBoostPlaying = false;
     
-    // Load volume and mute preferences
-    this.muted = (localStorage.getItem('slyth_muted') ?? localStorage.getItem('slither_muted')) === 'true';
-    this.volume = parseFloat(localStorage.getItem('slyth_volume') ?? localStorage.getItem('slither_volume') ?? '0.4');
+    // Safe preference loading (Node.js and browser safe)
+    const getStored = (key, legacyKey, def) => {
+      try { return localStorage.getItem(key) ?? localStorage.getItem(legacyKey) ?? def; }
+      catch { return def; }
+    };
+    this.muted = getStored('slyth_muted', 'slither_muted', 'false') === 'true';
+    this.volume = parseFloat(getStored('slyth_volume', 'slither_volume', '0.4'));
     
     // Combo tracker for ascending eat chimes
     this.lastEatTime = 0;
     this.comboCount = 0;
+  }
+
+  // Ensure audio context is initialized, resumed, and active
+  ready() {
+    if (this.muted) return false;
+    this.init();
+    return !!(this.ctx && this.masterGain);
   }
 
   init() {
@@ -28,6 +39,7 @@ class AudioEngine {
 
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
       this.ctx = new AudioContextClass();
       
       this.masterGain = this.ctx.createGain();
@@ -84,8 +96,7 @@ class AudioEngine {
   }
 
   playEat(massValue = 1) {
-    if (!this.ctx || this.muted) return;
-    this.init();
+    if (!this.ready()) return;
 
     const now = this.ctx.currentTime;
     // Scale pitch based on recent eats combo
@@ -116,9 +127,7 @@ class AudioEngine {
   }
 
   startBoost() {
-    if (!this.ctx || this.isBoostPlaying || this.muted) return;
-    this.init();
-    if (!this.boostGain) return;
+    if (!this.ready() || this.isBoostPlaying || !this.boostGain) return;
 
     this.isBoostPlaying = true;
     const now = this.ctx.currentTime;
@@ -127,8 +136,7 @@ class AudioEngine {
   }
 
   stopBoost() {
-    if (!this.ctx || !this.isBoostPlaying) return;
-    if (!this.boostGain) return;
+    if (!this.ctx || !this.isBoostPlaying || !this.boostGain) return;
 
     this.isBoostPlaying = false;
     const now = this.ctx.currentTime;
@@ -137,8 +145,7 @@ class AudioEngine {
   }
 
   playDeath() {
-    if (!this.ctx || this.muted) return;
-    this.init();
+    if (!this.ready()) return;
 
     const now = this.ctx.currentTime;
 
@@ -186,8 +193,7 @@ class AudioEngine {
   }
 
   playKill() {
-    if (!this.ctx || this.muted) return;
-    this.init();
+    if (!this.ready()) return;
 
     const now = this.ctx.currentTime;
     const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 arpeggio
@@ -213,8 +219,7 @@ class AudioEngine {
   }
 
   playPreyCaught() {
-    if (!this.ctx || this.muted) return;
-    this.init();
+    if (!this.ready()) return;
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();

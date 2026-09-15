@@ -2,6 +2,14 @@
 import { CONFIG, BOT_PERSONALITIES, normalizeAngle } from './config.js';
 import { Snake } from './snake.js';
 
+const FEELER_ANGLES = [
+  0,                  // Center
+  -Math.PI * 0.14,    // Mid-left (~25 deg)
+  Math.PI * 0.14,     // Mid-right (~25 deg)
+  -Math.PI * 0.32,    // Wide-left (~58 deg)
+  Math.PI * 0.32      // Wide-right (~58 deg)
+];
+
 export class BotSnake extends Snake {
   constructor(id, name, x, y, skinId, personalityType = 'HUNTER') {
     super(id, name, x, y, skinId, false);
@@ -84,21 +92,24 @@ export class BotSnake extends Snake {
   // snakeMap: Map<id, Snake> for O(1) id->snake lookup inside the tight feeler loop.
   evaluateSensoryFeelers(spatialGrid, snakeMap) {
     const feelerDist = this.personality.feelerLength + this.radius * 1.2;
-    const feelerAngles = [
-      0,                  // Center
-      -Math.PI * 0.14,    // Mid-left (~25 deg)
-      Math.PI * 0.14,     // Mid-right (~25 deg)
-      -Math.PI * 0.32,    // Wide-left (~58 deg)
-      Math.PI * 0.32      // Wide-right (~58 deg)
-    ];
 
     let leftPressure = 0;
     let rightPressure = 0;
     let dangerFound = false;
     let highDanger = false;
 
-    for (let f = 0; f < feelerAngles.length; f++) {
-      const rayAngle = this.angle + feelerAngles[f];
+    const addPressure = (angle, amount, centerAmount = amount * 0.6) => {
+      if (angle < 0) leftPressure += amount;
+      else if (angle > 0) rightPressure += amount;
+      else {
+        leftPressure += centerAmount;
+        rightPressure += centerAmount;
+      }
+    };
+
+    for (let f = 0; f < FEELER_ANGLES.length; f++) {
+      const fa = FEELER_ANGLES[f];
+      const rayAngle = this.angle + fa;
       const rayEndX = this.x + Math.cos(rayAngle) * feelerDist;
       const rayEndY = this.y + Math.sin(rayAngle) * feelerDist;
 
@@ -107,12 +118,7 @@ export class BotSnake extends Snake {
       if (endDistFromCenter >= CONFIG.WORLD_RADIUS - CONFIG.BOT_FEELER_BOUNDARY_MARGIN) {
         dangerFound = true;
         highDanger = true;
-        if (feelerAngles[f] < 0) leftPressure += 3.5;
-        else if (feelerAngles[f] > 0) rightPressure += 3.5;
-        else {
-          leftPressure += 2.0;
-          rightPressure += 2.0;
-        }
+        addPressure(fa, 3.5, 2.0);
       }
 
       // Check segments along feeler
@@ -144,14 +150,7 @@ export class BotSnake extends Snake {
           const threatWeight = (samplePoints - s + 1) * 2.2;
           if (s === 1) highDanger = true;
 
-          if (feelerAngles[f] < 0) {
-            leftPressure += threatWeight;
-          } else if (feelerAngles[f] > 0) {
-            rightPressure += threatWeight;
-          } else {
-            leftPressure += threatWeight * 0.6;
-            rightPressure += threatWeight * 0.6;
-          }
+          addPressure(fa, threatWeight);
         }
       }
     }
@@ -180,27 +179,26 @@ export class BotSnake extends Snake {
   detectIncomingCutOff(allSnakes) {
     for (let i = 0; i < allSnakes.length; i++) {
       const other = allSnakes[i];
-      if (other.id === this.id || other.dead || other.invulnerableTimer > 0) continue;
+      if (other.id === this.id || other.dead || other.invulnerableTimer > 0 || !other.isBoosting) continue;
 
       const dx = other.x - this.x;
       const dy = other.y - this.y;
       const dist = Math.hypot(dx, dy);
 
-      if (dist < CONFIG.BOT_CUT_OFF_DETECT_DIST && other.isBoosting) {
-        // Angle to other snake's head
-        const angleToOther = Math.atan2(dy, dx);
-        const relAngle = normalizeAngle(angleToOther - this.angle);
+      if (dist >= CONFIG.BOT_CUT_OFF_DETECT_DIST) continue;
 
-        // Is the enemy in front of us (within 60 degrees) and heading across?
-        if (Math.abs(relAngle) < Math.PI * 0.35) {
-          const cross = dx * Math.sin(other.angle) - dy * Math.cos(other.angle);
-          // Evasive turn inside
-          const evasiveDelta = cross > 0 ? -Math.PI * 0.55 : Math.PI * 0.55;
-          return {
-            threat: true,
-            evasiveAngle: this.angle + evasiveDelta
-          };
-        }
+      // Angle to other snake's head
+      const angleToOther = Math.atan2(dy, dx);
+      const relAngle = normalizeAngle(angleToOther - this.angle);
+
+      // Is the enemy in front of us (within 60 degrees) and heading across?
+      if (Math.abs(relAngle) < Math.PI * 0.35) {
+        const cross = dx * Math.sin(other.angle) - dy * Math.cos(other.angle);
+        const evasiveDelta = cross > 0 ? -Math.PI * 0.55 : Math.PI * 0.55;
+        return {
+          threat: true,
+          evasiveAngle: this.angle + evasiveDelta
+        };
       }
     }
     return { threat: false };
@@ -294,7 +292,8 @@ export class BotSnake extends Snake {
   findDeathDropCluster(foodManager) {
     let best = null;
     let highestValue = 0;
-    const nearby = foodManager.spatialGrid.queryCircle(this.x, this.y, CONFIG.BOT_FEAST_SEARCH_RADIUS);
+    this._scratchCandidates.length = 0;
+    const nearby = foodManager.spatialGrid.queryCircle(this.x, this.y, CONFIG.BOT_FEAST_SEARCH_RADIUS, this._scratchCandidates);
 
     for (let i = 0; i < nearby.length; i++) {
       const f = nearby[i];
@@ -367,7 +366,8 @@ export class BotSnake extends Snake {
   findBestFood(foodManager) {
     let best = null;
     let highestScore = -Infinity;
-    const nearby = foodManager.spatialGrid.queryCircle(this.x, this.y, CONFIG.BOT_FOOD_SEARCH_RADIUS);
+    this._scratchCandidates.length = 0;
+    const nearby = foodManager.spatialGrid.queryCircle(this.x, this.y, CONFIG.BOT_FOOD_SEARCH_RADIUS, this._scratchCandidates);
 
     for (let i = 0; i < nearby.length; i++) {
       const f = nearby[i];
